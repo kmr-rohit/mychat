@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Secure Chat</title>
+    <style>
+        .chat-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+        }
+        .message {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .message.sent {
+            background-color: #e3f2fd;
+            margin-left: 20%;
+        }
+        .message.received {
+            background-color: #f5f5f5;
+            margin-right: 20%;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container" id="loginSection">
+        <h2>Join Chat</h2>
+        <input type="text" id="keyword" placeholder="Enter secret keyword">
+        <input type="text" id="username" placeholder="Enter your name">
+        <button onclick="joinChat()">Join</button>
+    </div>
+
+    <div class="chat-container" id="chatSection" style="display: none;">
+        <div id="messages"></div>
+        <input type="text" id="messageInput" placeholder="Type your message">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        let username = '';
+
+        function joinChat() {
+            const keyword = document.getElementById('keyword').value;
+            username = document.getElementById('username').value;
+
+            fetch('/join', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({keyword})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    document.getElementById('loginSection').style.display = 'none';
+                    document.getElementById('chatSection').style.display = 'block';
+                    startMessagePolling();
+                }
+            });
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            
+            fetch('/send', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message, sender: username})
+            })
+            .then(() => {
+                document.getElementById('messageInput').value = '';
+            });
+        }
+
+        function updateMessages(messages) {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${msg.sender === username ? 'sent' : 'received'}`;
+                messageDiv.textContent = `${msg.sender}: ${msg.message}`;
+                messagesDiv.appendChild(messageDiv);
+            });
+        }
+
+        function startMessagePolling() {
+            setInterval(() => {
+                fetch('/messages')
+                    .then(response => response.json())
+                    .then(messages => updateMessages(messages));
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
