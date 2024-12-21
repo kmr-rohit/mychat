@@ -60,4 +60,4 @@ def get_messages():
     return jsonify(messages)
 
 if __name__ == '__main__':
-    app.run(ssl_context='adhoc')  # Enable HTTPS
+    app.run(host='0.0.0.0', port=8000, ssl_context='adhoc')  # Enable HTTPS and listen on all IPs
