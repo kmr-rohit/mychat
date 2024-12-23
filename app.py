@@ -3,24 +3,22 @@ from datetime import datetime, timedelta
 import secrets
 import threading
 import time
+import os
 
 app = Flask(__name__)
 app.secret_key = secrets.token_hex(16)
 
-# In-memory message storage
 messages = []
-KEYWORD = "troitroi"  # Change this to your desired secret keyword
+KEYWORD = "troitroi"
 
 def cleanup_messages():
-    """Delete messages older than 1 hour"""
     while True:
         current_time = datetime.now()
         global messages
         messages = [msg for msg in messages if 
                    (current_time - msg['timestamp']) < timedelta(minutes=5)]
-        time.sleep(60)  # Check every minute
+        time.sleep(60)
 
-# Start cleanup thread
 cleanup_thread = threading.Thread(target=cleanup_messages, daemon=True)
 cleanup_thread.start()
 
@@ -60,4 +58,5 @@ def get_messages():
     return jsonify(messages)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, ssl_context='adhoc')  # Enable HTTPS and listen on all IPs
+    port = int(os.environ.get('PORT', 8000))
+    app.run(host='0.0.0.0', port=port)
